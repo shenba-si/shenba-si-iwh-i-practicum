@@ -1,0 +1,25 @@
+doctype html
+html
+  head
+    title= title
+    link(rel="stylesheet", href="/css/style.css")
+  body
+    h1= title
+    a(href="/update-cobj") Add to this table
+    br 
+    br
+    table(border="1")
+      thead
+        tr
+          th Name
+          th Type
+          th Age
+      tbody
+        each item in data
+          tr
+            td= item.properties.name
+            td= item.properties.type
+            td= item.properties.age
+            td 
+                a(href=`/update-cobj?id=${item.id}`) Update
+    br

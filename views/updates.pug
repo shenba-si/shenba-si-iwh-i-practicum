@@ -1,0 +1,27 @@
+doctype html
+html
+  head
+    title= title
+    link(rel="stylesheet", href="/css/style.css")
+  body
+    h1= title
+    form(action="/update-cobj", method="POST")
+        input(type="hidden", name="id", value=data ? data.id : '')
+        
+        label(for="name") Name:
+        input(type="text", name="name", value=data ? data.name : '', required)
+        br
+
+        label(for="type") Type:
+        input(type="text", name="type", value=data ? data.type : '', required)
+        br
+
+        label(for="age") Age:
+        input(type="number", name="age", value=data ? data.age : '', required)
+        br
+
+        button(type="submit") #{data ? 'Update' : 'Create'}
+
+
+    br
+    a(href="/") Return to the homepage

@@ -9,63 +9,114 @@ app.use(express.json());
 
 // * Please DO NOT INCLUDE the private app access token in your repo. Don't do this practicum in your normal account.
 const PRIVATE_APP_ACCESS = '';
+const OBJECT_TYPE = '2-170694834';
 
 // TODO: ROUTE 1 - Create a new app.get route for the homepage to call your custom object data. Pass this data along to the front-end and create a new pug template in the views folder.
 
-// * Code for Route 1 goes here
+app.get("/", async (req, res) => {
+  const url = `https://api.hubapi.com/crm/v3/objects/${OBJECT_TYPE}?properties=name,type,age`;
+
+  const headers = {
+    Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
+    "Content-Type": "application/json",
+  };
+
+  try {
+    const response = await axios.get(url, { headers });
+    const customObjects = response.data.results;
+
+    res.render("homepage", {
+      title: "Custom Objects | HubSpot Practicum",
+      data: customObjects,
+    });
+  } catch (error) {
+    console.error(
+      "Error fetching custom objects:",
+      error.response?.data || error.message
+    );
+    res.status(500).send("Error loading custom object data.");
+  }
+});
 
 // TODO: ROUTE 2 - Create a new app.get route for the form to create or update new custom object data. Send this data along in the next route.
 
-// * Code for Route 2 goes here
+app.get("/update-cobj", async (req, res) => {
+  const { id } = req.query;
+
+  const headers = {
+    Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
+    "Content-Type": "application/json",
+  };
+
+  if (id) {
+    try {
+      const url = `https://api.hubapi.com/crm/v3/objects/${OBJECT_TYPE}/${id}?properties=name,type,age`;
+      const response = await axios.get(url, { headers });
+
+      const record = response.data;
+
+      res.render("updates", {
+        title: "Update Custom Object Form | Integrating With HubSpot I Practicum",
+        data: {
+          id: record.id,
+          name: record.properties.name,
+          type: record.properties.type,
+          age: record.properties.age,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "Error fetching object:",
+        error.response?.data || error.message
+      );
+      return res.status(500).send("Error loading object for editing.");
+    }
+  } else {
+    res.render("updates", {
+      title: "Create Custom Object | HubSpot Practicum",
+      data: {},
+    });
+  }
+});
 
 // TODO: ROUTE 3 - Create a new app.post route for the custom objects form to create or update your custom object data. Once executed, redirect the user to the homepage.
 
-// * Code for Route 3 goes here
+app.post("/update-cobj", async (req, res) => {
+  const { id, name, type, age } = req.body;
 
-/** 
-* * This is sample code to give you a reference for how you should structure your calls. 
+  const headers = {
+    Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
+    "Content-Type": "application/json",
+  };
 
-* * App.get sample
-app.get('/contacts', async (req, res) => {
-    const contacts = 'https://api.hubspot.com/crm/v3/objects/contacts';
-    const headers = {
-        Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
-        'Content-Type': 'application/json'
+  const payload = {
+    properties: {
+      name: name,
+      type: type,
+      age: age,
+    },
+  };
+
+  try {
+    if (id) {
+      // PATCH → update
+      const url = `https://api.hubapi.com/crm/v3/objects/${OBJECT_TYPE}/${id}`;
+      await axios.patch(url, payload, { headers });
+    } else {
+      // POST → create
+      const url = `https://api.hubapi.com/crm/v3/objects/${OBJECT_TYPE}`;
+      await axios.post(url, payload, { headers });
     }
-    try {
-        const resp = await axios.get(contacts, { headers });
-        const data = resp.data.results;
-        res.render('contacts', { title: 'Contacts | HubSpot APIs', data });      
-    } catch (error) {
-        console.error(error);
-    }
+
+    res.redirect("/");
+  } catch (error) {
+    console.error(
+      "Failed to create/update record:",
+      error.response?.data || error.message
+    );
+    res.status(500).send("Something went wrong.");
+  }
 });
-
-* * App.post sample
-app.post('/update', async (req, res) => {
-    const update = {
-        properties: {
-            "favorite_book": req.body.newVal
-        }
-    }
-
-    const email = req.query.email;
-    const updateContact = `https://api.hubapi.com/crm/v3/objects/contacts/${email}?idProperty=email`;
-    const headers = {
-        Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
-        'Content-Type': 'application/json'
-    };
-
-    try { 
-        await axios.patch(updateContact, update, { headers } );
-        res.redirect('back');
-    } catch(err) {
-        console.error(err);
-    }
-
-});
-*/
-
 
 // * Localhost
-app.listen(3000, () => console.log('Listening on http://localhost:3000'));
+app.listen(3000, () => console.log("Listening on http://localhost:3000"));
